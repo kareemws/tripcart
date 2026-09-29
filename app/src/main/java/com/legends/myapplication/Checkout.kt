@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import ai.luciq.compose.luciqPrivate
 import org.json.JSONObject
 
 fun detailsValid() = Store.name.isNotBlank() &&
@@ -179,7 +180,7 @@ class PaymentBridge(private val checkoutJson: String, private val onPaid: () -> 
 @Composable
 private fun PaymentWebView(total: Double, modifier: Modifier) {
     AndroidView(
-        modifier = modifier,
+        modifier = modifier.luciqPrivate(), // card details: black box in screenshots and replays
         factory = { context ->
             WebView(context).apply {
                 settings.javaScriptEnabled = true

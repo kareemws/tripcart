@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -44,6 +45,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
+import ai.luciq.compose.LuciqScreen
 import com.legends.myapplication.ui.theme.MyApplicationTheme
 
 sealed interface Screen {
@@ -101,7 +103,6 @@ object Store {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Store.init(this)
         enableEdgeToEdge()
         setContent { MyApplicationTheme { App() } }
     }
@@ -163,6 +164,15 @@ fun App() {
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()) {
+            // Custom navigation, so each screen is named for Luciq by hand.
+            val name = screen::class.simpleName.orEmpty()
+            key(name) { LuciqScreen(screenName = name) { ScreenContent(screen) } }
+        }
+    }
+}
+
+@Composable
+private fun ScreenContent(screen: Screen) {
             when (screen) {
                 Screen.Browse -> BrowseScreen()
                 is Screen.Details -> DetailsScreen(screen.product)
@@ -175,8 +185,6 @@ fun App() {
                 Screen.HeavyList -> HeavyListScreen()
                 Screen.Settings -> SettingsScreen()
             }
-        }
-    }
 }
 
 @Composable
