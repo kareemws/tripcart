@@ -12,6 +12,7 @@ plugins {
 //   ai.apiKey=sk-ant-...
 //   ai.endpoint=https://api.anthropic.com/v1/messages   (optional)
 //   ai.model=claude-opus-5                              (optional)
+//   launchdarkly.mobileKey=mob-...                      (optional; drives the variant B checkout flag)
 //   writing.serverUrl=http://10.0.2.2:8787              (optional; the server/ writing service, emulator default)
 val localProps = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
@@ -35,6 +36,7 @@ android {
         buildConfigField("String", "AI_ENDPOINT", "\"${localProp("ai.endpoint", "https://api.anthropic.com/v1/messages")}\"")
         buildConfigField("String", "AI_API_KEY", "\"${localProp("ai.apiKey")}\"")
         buildConfigField("String", "AI_MODEL", "\"${localProp("ai.model", "claude-opus-5")}\"")
+        buildConfigField("String", "LAUNCHDARKLY_MOBILE_KEY", "\"${localProp("launchdarkly.mobileKey")}\"")
         buildConfigField("String", "WRITING_SERVER_URL", "\"${localProp("writing.serverUrl", "http://10.0.2.2:8787")}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -89,6 +91,7 @@ dependencies {
     implementation(libs.luciq)
     implementation(libs.luciq.apm)
     implementation(libs.luciq.compose.apm)
+    implementation(libs.launchdarkly.android)
     constraints {
         // luciq-core 19.12.1 pulls material 1.0.0 -> vectordrawable-animated 1.0.0, whose namespace
         // (androidx.vectordrawable) clashes with vectordrawable's and fails AGP 9's manifest merge.

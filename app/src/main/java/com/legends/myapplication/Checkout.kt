@@ -152,6 +152,8 @@ fun SinglePageCheckout() {
         val cart = Store.serverCart
         if (cart != null && detailsValid()) PaymentWebView(cart.discountedTotal, Modifier.fillMaxWidth().height(440.dp))
         else Text("Fill in your details to continue to payment.", style = MaterialTheme.typography.bodyMedium)
+        // Deliberate crash for testing: Luciq reports it on the SinglePage screen, tagged with the "variant B" flag.
+        Button({ throw IllegalStateException("Test crash on checkout ($VARIANT_B_LUCIQ_NAME)") }, Modifier.fillMaxWidth()) { Text("Crash checkout") }
     }
 }
 

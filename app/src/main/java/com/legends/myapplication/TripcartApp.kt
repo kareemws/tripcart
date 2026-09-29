@@ -21,5 +21,6 @@ class TripcartApp : Application() {
             }
         }
         Store.init(this)
+        Flags.init(this) // after Store, since the variant B flag sets the checkout variant
     }
 }
