@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SecurePay</title>
+<style>
+  body { font-family: -apple-system, Roboto, sans-serif; margin: 0; padding: 16px; background: #f4f6fb; color: #1b2233; }
+  .card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  h1 { font-size: 16px; margin: 0 0 4px; }
+  .amount { font-size: 28px; font-weight: 600; margin: 0 0 16px; }
+  label { display: block; font-size: 13px; margin: 12px 0 4px; color: #4a5470; }
+  input { width: 100%; box-sizing: border-box; padding: 12px; font-size: 16px; border: 1px solid #c9cfdd; border-radius: 8px; }
+  button { width: 100%; margin-top: 20px; padding: 14px; font-size: 16px; font-weight: 600; color: #fff; background: #2754d6; border: 0; border-radius: 8px; }
+  button:disabled { opacity: .6; }
+  #msg { min-height: 20px; margin-top: 12px; font-size: 14px; color: #b3261e; }
+  .foot { text-align: center; font-size: 12px; color: #7a839a; margin-top: 12px; }
+</style>
+</head>
+<body>
+<form class="card" id="form" novalidate>
+  <h1>&#128274; SecurePay &middot; partner checkout</h1>
+  <p class="amount" id="amount"></p>
+  <label for="card">Card number</label>
+  <input id="card" inputmode="numeric" autocomplete="cc-number" placeholder="4242 4242 4242 4242">
+  <label for="exp">Expiry</label>
+  <input id="exp" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY">
+  <label for="email">Email</label>
+  <input id="email" type="email" autocomplete="email">
+  <button id="pay" type="submit">Pay</button>
+  <div id="msg"></div>
+</form>
+<p class="foot">Hosted by SecurePay (demo)</p>
+<script>
+  const checkout = JSON.parse(window.TripcartBridge ? TripcartBridge.checkout() : '{"amount":0,"email":""}');
+  const $ = id => document.getElementById(id);
+  $('amount').textContent = '$' + checkout.amount.toFixed(2);
+  $('pay').textContent = 'Pay $' + checkout.amount.toFixed(2);
+  $('email').value = checkout.email;
+  const say = text => { $('msg').textContent = text; };
+
+  $('form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const digits = $('card').value.replace(/\D/g, '');
+    const exp = /^(\d{2})\s*\/\s*(\d{2})$/.exec($('exp').value.trim());
+    if (digits.length < 12 || digits.length > 19) return say('Enter a valid card number.');
+    if (!exp || +exp[1] < 1 || +exp[1] > 12 || new Date(2000 + +exp[2], +exp[1]) <= new Date()) return say('Enter a valid expiry (MM/YY).');
+    if (!/^\S+@\S+\.\S+$/.test($('email').value)) return say('Enter a valid email.');
+    $('pay').disabled = true;
+    say('Processing…');
+    try {
+      // Only the last 4 digits leave the page.
+      const res = await fetch('https://dummyjson.com/http/200', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: checkout.amount, email: $('email').value, cardLast4: digits.slice(-4) }),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      say('');
+      TripcartBridge.paid();
+    } catch (err) {
+      say('Payment failed: ' + err.message);
+      $('pay').disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
