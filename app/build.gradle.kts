@@ -12,6 +12,7 @@ plugins {
 //   ai.apiKey=sk-ant-...
 //   ai.endpoint=https://api.anthropic.com/v1/messages   (optional)
 //   ai.model=claude-opus-5                              (optional)
+//   writing.serverUrl=http://10.0.2.2:8787              (optional; the server/ writing service, emulator default)
 val localProps = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
 }
@@ -34,6 +35,7 @@ android {
         buildConfigField("String", "AI_ENDPOINT", "\"${localProp("ai.endpoint", "https://api.anthropic.com/v1/messages")}\"")
         buildConfigField("String", "AI_API_KEY", "\"${localProp("ai.apiKey")}\"")
         buildConfigField("String", "AI_MODEL", "\"${localProp("ai.model", "claude-opus-5")}\"")
+        buildConfigField("String", "WRITING_SERVER_URL", "\"${localProp("writing.serverUrl", "http://10.0.2.2:8787")}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

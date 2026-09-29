@@ -1,0 +1,17 @@
+{
+  "name": "tripcart-writing-server",
+  "version": "1.0.0",
+  "description": "LaunchDarkly AgentControl writing-improver service for Tripcart",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "@launchdarkly/ai-claude-agents": "0.2.0",
+    "@launchdarkly/ai-node": "0.2.0",
+    "@launchdarkly/ai-otel": "0.1.1",
+    "dotenv": "18.0.4"
+  }
+}

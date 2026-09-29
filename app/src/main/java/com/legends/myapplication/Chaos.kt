@@ -44,6 +44,8 @@ fun ChaosScreen() {
     var status by remember { mutableStateOf("Tap a card to trigger it.") }
     var asking by remember { mutableStateOf(false) }
     var question by remember { mutableStateOf("Suggest a weekend trip idea in one sentence.") }
+    var improving by remember { mutableStateOf(false) }
+    var draft by remember { mutableStateOf("hi, my order came late and one item was broke, i want a refund asap") }
     fun run(label: String, block: suspend () -> String) {
         status = "$label…"
         scope.launch {
@@ -87,6 +89,7 @@ fun ChaosScreen() {
             startMemoryHog { mb -> status = "Memory hog: holding $mb MB" }
         }
         ChaosCard("Ask AI", "Send a question to a real LLM API and show the answer.") { asking = true }
+        ChaosCard("Improve writing", "Rewrite a draft with the LaunchDarkly AgentControl writing agent (runs on server/).") { improving = true }
     }
     if (asking) AlertDialog(
         onDismissRequest = { asking = false },
@@ -99,6 +102,21 @@ fun ChaosScreen() {
             }, enabled = question.isNotBlank()) { Text("Ask") }
         },
         dismissButton = { TextButton({ asking = false }) { Text("Cancel") } },
+    )
+    if (improving) AlertDialog(
+        onDismissRequest = { improving = false },
+        title = { Text("Improve writing") },
+        text = { OutlinedTextField(draft, { draft = it }, Modifier.fillMaxWidth(), label = { Text("Draft") }, minLines = 3) },
+        confirmButton = {
+            TextButton({
+                improving = false
+                run("Improve writing") {
+                    val r = improveWriting(draft)
+                    if (r.fromLaunchDarkly) r.text else "${r.error ?: "unavailable"} Draft left unchanged."
+                }
+            }, enabled = draft.isNotBlank()) { Text("Improve") }
+        },
+        dismissButton = { TextButton({ improving = false }) { Text("Cancel") } },
     )
 }
 
