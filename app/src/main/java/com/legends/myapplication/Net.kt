@@ -30,8 +30,8 @@ suspend fun http(url: String, body: String? = null, headers: Map<String, String>
             c.connectTimeout = 15_000
             c.readTimeout = 60_000
             headers.forEach(c::setRequestProperty)
+            c.requestMethod = if (body != null) "POST" else "GET" // explicit: Luciq APM listed no default-GET calls
             if (body != null) {
-                c.requestMethod = "POST"
                 c.doOutput = true
                 c.setRequestProperty("Content-Type", "application/json")
                 c.outputStream.use { it.write(body.toByteArray()) }

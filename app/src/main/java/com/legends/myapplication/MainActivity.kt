@@ -46,6 +46,9 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import ai.luciq.compose.LuciqScreen
+import ai.luciq.library.Luciq
+import ai.luciq.library.featuresflags.model.LuciqFeatureFlag
+import ai.luciq.library.user.UserEventParam
 import com.legends.myapplication.ui.theme.MyApplicationTheme
 
 sealed interface Screen {
@@ -79,20 +82,29 @@ object Store {
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences("flags", Context.MODE_PRIVATE)
-        checkoutVariant = prefs.getString("checkout_variant", "A")!!
+        setVariant(prefs.getString("checkout_variant", "A")!!)
     }
 
     fun setVariant(v: String) {
         checkoutVariant = v
         prefs.edit { putString("checkout_variant", v) }
+        // Multivariant Luciq flag, so crashes, sessions and funnels can be split by A/B. Luciq keeps it across sessions.
+        Luciq.addFeatureFlag(LuciqFeatureFlag("checkout_variant", v))
     }
+
+    /** Checkout funnel step as a Luciq user event, tagged with the flag variant so funnels can split A/B. */
+    fun track(event: String) = Luciq.logUserEvent(event, UserEventParam("checkout_variant", checkoutVariant))
 
     fun cartLines(): Map<Product, Int> = cart.groupingBy { it }.eachCount()
     fun go(s: Screen) = stack.add(s)
     fun tab(s: Screen) { stack.clear(); stack.add(s) }
     fun back() { stack.removeAt(stack.lastIndex) }
-    fun startCheckout() = tab(if (checkoutVariant == "B") Screen.SinglePage else Screen.Cart)
+    fun startCheckout() {
+        track("checkout_started")
+        tab(if (checkoutVariant == "B") Screen.SinglePage else Screen.Cart)
+    }
     fun finishOrder(total: Double) {
+        track("payment_succeeded")
         val id = serverCart?.id ?: 0
         cart.clear()
         serverCart = null
@@ -166,7 +178,7 @@ fun App() {
         Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()) {
             // Custom navigation, so each screen is named for Luciq by hand.
             val name = screen::class.simpleName.orEmpty()
-            key(name) { LuciqScreen(screenName = name) { ScreenContent(screen) } }
+            key(name) { LuciqScreen(screenName = name, showAsScreen = true) { ScreenContent(screen) } }
         }
     }
 }

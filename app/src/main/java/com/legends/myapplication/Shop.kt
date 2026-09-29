@@ -98,6 +98,7 @@ fun DetailsScreen(p: Product) {
             Text(p.description, style = MaterialTheme.typography.bodyLarge)
             Button(
                 onClick = {
+                    Store.track("add_to_cart")
                     Store.cart.add(p)
                     Toast.makeText(context, "Added to cart", Toast.LENGTH_SHORT).show()
                 },

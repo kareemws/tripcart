@@ -36,6 +36,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import ai.luciq.compose.luciqPrivate
+import ai.luciq.library.Luciq
 import org.json.JSONObject
 
 fun detailsValid() = Store.name.isNotBlank() &&
@@ -121,14 +122,14 @@ fun CartScreen() {
     if (Store.cart.isEmpty()) return EmptyCart()
     Page("Step 1 of 3 · Cart") {
         CartSummary()
-        Button({ Store.go(Screen.YourDetails) }, Modifier.fillMaxWidth(), enabled = Store.serverCart != null) { Text("Continue") }
+        Button({ Store.track("cart_continue"); Store.go(Screen.YourDetails) }, Modifier.fillMaxWidth(), enabled = Store.serverCart != null) { Text("Continue") }
     }
 }
 
 @Composable
 fun YourDetailsScreen() = Page("Step 2 of 3 · Your details") {
     DetailsForm()
-    Button({ Store.go(Screen.Payment) }, Modifier.fillMaxWidth(), enabled = detailsValid()) { Text("Continue to payment") }
+    Button({ Store.track("details_continue"); Store.go(Screen.Payment) }, Modifier.fillMaxWidth(), enabled = detailsValid()) { Text("Continue to payment") }
 }
 
 @Composable
@@ -159,7 +160,7 @@ fun ConfirmationScreen(s: Screen.Confirmation) = Page("Booking confirmed") {
     Text("Order #${s.orderId}")
     Text("Paid ${money(s.total)}", style = MaterialTheme.typography.titleLarge)
     Text("A receipt is on its way to ${Store.email}.")
-    Button({ Store.tab(Screen.Browse) }, Modifier.fillMaxWidth()) { Text("Back to browse") }
+    Button({ Store.track("back_to_browse"); Store.tab(Screen.Browse) }, Modifier.fillMaxWidth()) { Text("Back to browse") }
 }
 
 /** Exposed to the bundled payment page as `TripcartBridge`. JS calls arrive on a background thread. */
@@ -168,6 +169,12 @@ class PaymentBridge(private val checkoutJson: String, private val onPaid: () -> 
 
     @JavascriptInterface
     fun checkout() = checkoutJson
+
+    /** The partner page's Pay button, before its own validation and network call. */
+    @JavascriptInterface
+    fun payTapped() {
+        Store.track("pay_tapped")
+    }
 
     @JavascriptInterface
     fun paid() {
@@ -179,6 +186,13 @@ class PaymentBridge(private val checkoutJson: String, private val onPaid: () -> 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 private fun PaymentWebView(total: Double, modifier: Modifier) {
+    // Both variants only reach payment with valid details, so identify the user here.
+    LaunchedEffect(Unit) {
+        Luciq.identifyUser(Store.name, Store.email, null)
+        Luciq.setUserAttribute("plan", "free")
+        Luciq.setUserAttribute("persona", "Checkout PM")
+        Store.track("payment_viewed")
+    }
     AndroidView(
         modifier = modifier.luciqPrivate(), // card details: black box in screenshots and replays
         factory = { context ->

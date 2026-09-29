@@ -14,3 +14,6 @@
 -keepclassmembers class com.legends.myapplication.PaymentBridge {
     @android.webkit.JavascriptInterface <methods>;
 }
+
+# Screen class names are the Luciq screen names (LuciqScreen); keep them readable in release.
+-keepnames class com.legends.myapplication.Screen$*

@@ -1,6 +1,8 @@
 package com.legends.myapplication
 
 import android.graphics.Bitmap
+import ai.luciq.crash.CrashReporting
+import ai.luciq.crash.models.LuciqNonFatalException
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -66,7 +68,8 @@ fun ChaosScreen() {
                 "unreachable"
             } catch (e: NumberFormatException) {
                 Log.e(TAG, "Handled error", e)
-                "Handled error: caught and logged $e"
+                CrashReporting.report(LuciqNonFatalException.Builder(e).build())
+                "Handled error: caught, logged and reported $e"
             }
         }
         ChaosCard("Slow call", "GET https://dummyjson.com/products?delay=5000", code = true) {

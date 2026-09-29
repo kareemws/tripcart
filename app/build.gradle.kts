@@ -27,8 +27,8 @@ android {
         applicationId = "com.legends.myapplication"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 3
+        versionName = "1.2.0"
 
         buildConfigField("String", "LUCIQ_APP_TOKEN", "\"${localProp("luciq.appToken")}\"")
         buildConfigField("String", "AI_ENDPOINT", "\"${localProp("ai.endpoint", "https://api.anthropic.com/v1/messages")}\"")
@@ -41,8 +41,10 @@ android {
     buildTypes {
         release {
             optimization {
-                enable = false
+                enable = true // R8 on, so crashes need the uploaded mapping file to be readable
             }
+            // ponytail: debug key so the workshop can install release builds; use a real key before shipping.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
