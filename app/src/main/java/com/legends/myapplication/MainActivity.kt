@@ -56,6 +56,7 @@ sealed interface Screen {
     data object Payment : Screen // checkout A, step 3
     data object SinglePage : Screen // checkout B
     data class Confirmation(val orderId: Int, val total: Double) : Screen
+    data object History : Screen
     data object Chaos : Screen
     data object HeavyList : Screen
     data object Settings : Screen
@@ -80,6 +81,7 @@ object Store {
     fun init(context: Context) {
         prefs = context.getSharedPreferences("flags", Context.MODE_PRIVATE)
         checkoutVariant = prefs.getString("checkout_variant", "A")!!
+        OrderHistory.init(context)
     }
 
     fun setVariant(v: String) {
@@ -94,6 +96,8 @@ object Store {
     fun startCheckout() = tab(if (checkoutVariant == "B") Screen.SinglePage else Screen.Cart)
     fun finishOrder(total: Double) {
         val id = serverCart?.id ?: 0
+        val lines = cartLines().map { (p, qty) -> OrderLine(p.title, qty, p.price, p.thumbnail) }
+        OrderHistory.add(Order(id, total, System.currentTimeMillis(), lines))
         cart.clear()
         serverCart = null
         tab(Screen.Confirmation(id, total))
@@ -116,6 +120,7 @@ private fun icon(path: String, mirror: Boolean = false) =
 private val BackIcon = icon("M20,11H7.83l5.59,-5.59L12,4l-8,8 8,8 1.41,-1.41L7.83,13H20v-2z", mirror = true)
 private val HomeIcon = icon("M10,20v-6h4v6h5v-8h3L12,3 2,12h3v8z")
 private val CartIcon = icon("M7,18c-1.1,0 -1.99,0.9 -1.99,2S5.9,22 7,22s2,-0.9 2,-2 -0.9,-2 -2,-2zM1,2v2h2l3.6,7.59 -1.35,2.45c-0.16,0.28 -0.25,0.61 -0.25,0.96 0,1.1 0.9,2 2,2h12v-2L7.42,15c-0.14,0 -0.25,-0.11 -0.25,-0.25l0.03,-0.12 0.9,-1.63h7.45c0.75,0 1.41,-0.41 1.75,-1.03l3.58,-6.49c0.08,-0.14 0.12,-0.31 0.12,-0.48 0,-0.55 -0.45,-1 -1,-1L5.21,4l-0.94,-2L1,2zM17,18c-1.1,0 -1.99,0.9 -1.99,2s0.89,2 1.99,2 2,-0.9 2,-2 -0.9,-2 -2,-2z")
+private val HistoryIcon = icon("M13,3c-4.97,0 -9,4.03 -9,9H1l3.89,3.89 0.07,0.14L9,12H6c0,-3.87 3.13,-7 7,-7s7,3.13 7,7 -3.13,7 -7,7c-1.93,0 -3.68,-0.79 -4.94,-2.06l-1.42,1.42C8.27,19.99 10.51,21 13,21c4.97,0 9,-4.03 9,-9s-4.03,-9 -9,-9zM12,8v5l4.28,2.54 0.72,-1.21 -3.5,-2.08V8H12z")
 private val ChaosIcon = icon("M1,21h22L12,2 1,21zM13,18h-2v-2h2v2zM13,14h-2v-4h2v4z")
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -155,6 +160,12 @@ fun App() {
                     label = { Text("Cart") },
                 )
                 NavigationBarItem(
+                    selected = root == Screen.History,
+                    onClick = { Store.tab(Screen.History) },
+                    icon = { Icon(HistoryIcon, null) },
+                    label = { Text("History") },
+                )
+                NavigationBarItem(
                     selected = root == Screen.Chaos,
                     onClick = { Store.tab(Screen.Chaos) },
                     icon = { Icon(ChaosIcon, null) },
@@ -181,6 +192,7 @@ private fun ScreenContent(screen: Screen) {
                 Screen.Payment -> PaymentScreen()
                 Screen.SinglePage -> SinglePageCheckout()
                 is Screen.Confirmation -> ConfirmationScreen(screen)
+                Screen.History -> HistoryScreen()
                 Screen.Chaos -> ChaosScreen()
                 Screen.HeavyList -> HeavyListScreen()
                 Screen.Settings -> SettingsScreen()
