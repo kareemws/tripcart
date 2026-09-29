@@ -29,8 +29,8 @@ android {
         applicationId = "com.legends.myapplication"
         minSdk = 24
         targetSdk = 37
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.3.0"
 
         buildConfigField("String", "LUCIQ_APP_TOKEN", "\"${localProp("luciq.appToken")}\"")
         buildConfigField("String", "AI_ENDPOINT", "\"${localProp("ai.endpoint", "https://api.anthropic.com/v1/messages")}\"")
